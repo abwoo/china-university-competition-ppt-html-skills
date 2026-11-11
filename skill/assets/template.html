@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<!--
+  tech-style 模板 v2 — 外贸全自动获客流水线 · 科技感演示
+  单文件、自包含，不依赖外部字体/CDN，无外部请求。
+  借鉴来源（仅个人本地使用，见 references/attribution.md）：
+  motion-effects (sueun-dev, MIT) — 325 个效果库，#020 Sci-fi HUD、
+  粒子、确定性时间 t 纯函数、5 秒无缝循环、无闪烁规则；
+  motion-graphics-skills (charlie947, MIT, 625 stars) — animated-chart
+  数字滚动、milestone-reveal 星点汇聚、motion-effects 16 种高级效果、
+   house 规则：事实先行、首 3 秒钩子、逐帧检查；
+  motion2code (lovisdotio, MIT, 348 stars) — 单条 GSAP 时间线是唯一时钟、
+  window.anim.seek(t) 可寻址、循环首尾帧一致；
+  hyperframes-motion (2boysfromtown, MIT) — AE 风格 HTML+GSAP、
+  3D 镜头推拉、动态排版、粒子与胶片质感；
+  video-shotcraft (Vincentwei1021, Apache-2.0, 18292 stars) — 124 张镜头
+  配方卡、节拍同步、逐帧检查；
+  cursorflow motion-graphics-promo (onstonboy, 仅借方法) — 每帧至少 3 个
+  独立运动、4 层景深、全部交错、取景器角标、雷达网格、HUD 仪表盘；
+  PHANTOMTONYT motion-design-skills (MIT) — system-diagram 逐节点搭建、
+  数据包沿边旅行、data-story 图表描绘与数字跳动；
+  iart-ai motion-skills (MIT, 1321 stars) — 50 个动效 skill 合集。
+  原有融合（fireworks-tech-graph、mg-styles-15 22-hud、PPT Master、
+  Frontend Slides、HyperFrames、归藏、Anthropic pptx）见 attribution.md。
+  2026-11-10 直接抄新增（attribution.md 第 9 节）：
+  ppt-agent-skill dark_tech（MIT，181★）—— 新增 dark-tech 预设，
+  底 #050b1f → #0a1f3d、80px 点阵、标题黄 #FDE047；
+  make-slide minimal-dark / keynote-apple / neon-terminal（MIT，141★）；
+  beautiful-html-templates signal / 8-bit-orbit / cobalt-grid（MIT，4965★）；
+  codex-ppt-skill（MIT，7778★）工作法；Kiterlin anti-defensive-writing（MIT）。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外贸全自动获客流水线 · 科技感演示</title>
+<style>
+  /* tech-style house tokens */
+  :root {
+    --stage-bg: #06070a;
+    --stage-bg-2: #0A0A14;
+    --panel-bg: rgba(123, 97, 255, 0.06);
+    --panel-border: rgba(167, 139, 250, 0.35);
+    --node: #7B61FF;
+    --node-2: #8052FF;
+    --glow: #A78BFA;
+    --flow: #22D3EE;
+    --title-yellow: #FFB829;
+    --text: #EDEFF7;
+    --muted: #9AA3B2;
+    --grid-line: rgba(123, 97, 255, 0.07);
+    --font-display: system-ui, -apple-system, "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+    --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow-x: hidden; }
+  /* 修复 v2 缺陷 1：.bg-persp 用 left/right -20% 的 fixed 层在某些
+     查看器里会撑出横向滚动条——只在 body 上 overflow-x:hidden 不够，
+     html 也要锁住；再加 .stage 的 overflow-x:clip 做兜底。 */
+  body {
+    font-family: var(--font-display);
+    color: var(--text);
+    background: radial-gradient(1200px 600px at 50% -10%, rgba(123, 97, 255, 0.16), transparent 60%),
+      linear-gradient(var(--stage-bg), var(--stage-bg-2));
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== 背景层（4 层景深，cursorflow 规则：每帧多层同时动） ===== */
+  .bg-grid { /* 墙面网格，缓移 */
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridDrift 24s linear infinite;
+  }
+  @keyframes gridDrift { to { background-position: 40px 0, 40px 0; } }
+  .bg-dots { /* 点阵网格层 */
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.55;
+    background-image: radial-gradient(rgba(167, 139, 250, 0.35) 1px, transparent 1.4px);
+    background-size: 26px 26px;
+    animation: dotsPulse 5s ease-in-out infinite;
+  }
+  @keyframes dotsPulse { 0%,100% { opacity: 0.35; } 50% { opacity: 0.65; } }
+  .bg-persp { /* 底部透视网格，向远方滚动 */
+    position: fixed; left: -20%; right: -20%; bottom: -6%; height: 34vh; z-index: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(34, 211, 238, 0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.14) 1px, transparent 1px);
+    background-size: 46px 46px;
+    transform: perspective(420px) rotateX(58deg);
+    transform-origin: bottom;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 55%, transparent);
+    mask-image: linear-gradient(180deg, transparent, #000 55%, transparent);
+    animation: perspScroll 3.2s linear infinite;
+  }
+  @keyframes perspScroll { to { background-position: 0 46px, 0 0; } }
+  #net { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.75; }
+  .scanline {
+    position: fixed; left: 0; right: 0; height: 120px; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.07), transparent);
+    animation: scan 9s linear infinite;
+  }
+  @keyframes scan { from { top: -15%; } to { top: 110%; } }
+  .hex-accent { /* 六边形角饰（22-hud） */
+    position: fixed; z-index: 0; pointer-events: none; opacity: 0.5;
+    width: 90px; height: 104px;
+    background: rgba(123, 97, 255, 0.05);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    border: none; outline: 1px solid rgba(167, 139, 250, 0.25);
+    animation: hexFloat 11s ease-in-out infinite;
+  }
+  .hex-accent.a { top: 12%; left: 2%; }
+  .hex-accent.b { top: 58%; right: 1.5%; animation-delay: -5s; width: 64px; height: 74px; }
+  @keyframes hexFloat { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(6deg); } }
+
+  /* 预设切换（Frontend Slides 机制：只换 CSS 变量） */
+  body[data-preset="neon"] {
+    --stage-bg: #050510; --stage-bg-2: #0A0A1E;
+    --panel-bg: rgba(0, 229, 255, 0.06);
+    --panel-border: rgba(0, 229, 255, 0.4);
+    --node: #00E5FF; --node-2: #FF2E88; --glow: #00E5FF; --flow: #FF2E88;
+    --title-yellow: #FACC15;
+    --grid-line: rgba(0, 229, 255, 0.08);
+  }
+  body[data-preset="terminal"] {
+    --stage-bg: #020805; --stage-bg-2: #03130A;
+    --panel-bg: rgba(34, 255, 136, 0.05);
+    --panel-border: rgba(34, 255, 136, 0.4);
+    --node: #22FF88; --node-2: #00C853; --glow: #22FF88; --flow: #22FF88;
+    --title-yellow: #B4FF39;
+    --grid-line: rgba(34, 255, 136, 0.07);
+  }
+  /* 新增预设 dark-tech（2026-11-10 直接抄 ppt-agent-skill dark_tech，MIT）：
+     底 #050b1f → #0a1f3d，点阵网格 80px、透明度 0.015，
+     强调 #22D3EE/#3B82F6/#6366f1，标题黄改 #FDE047，标题字距 -0.02em */
+  body[data-preset="darktech"] {
+    --stage-bg: #050b1f; --stage-bg-2: #0a1f3d;
+    --panel-bg: rgba(34, 211, 238, 0.08);
+    --panel-border: rgba(34, 211, 238, 0.4);
+    --node: #22D3EE; --node-2: #3B82F6; --glow: #22D3EE; --flow: #22D3EE;
+    --title-yellow: #FDE047;
+    --grid-line: rgba(255, 255, 255, 0.015);
+  }
+  body[data-preset="darktech"] .bg-grid { background-size: 80px 80px; }
+  /* 点阵层也要跟到 80px：ppt-agent dark_tech 的 80px 点阵指的是圆点层，
+     只改线网格的话圆点还是 26px，抄得不彻底 */
+  body[data-preset="darktech"] .bg-dots { background-size: 80px 80px; }
+  body[data-preset="darktech"] h1 { letter-spacing: -0.02em; }
+  body[data-preset="darktech"] .node {
+    background: linear-gradient(180deg, rgba(34, 211, 238, 0.08), rgba(99, 102, 241, 0.04));
+  }
+  /* 暂停：冻结全部 CSS 动画（motion2code 单时钟思想的 CSS 版） */
+  body.paused * { animation-play-state: paused !important; }
+  /* 低功耗静态模式（归藏 B 键）：停止全部动画，直接显示终态 */
+  body.low-power .bg-grid, body.low-power .bg-dots, body.low-power .bg-persp,
+  body.low-power .scanline, body.low-power .hex-accent { animation: none; }
+  body.low-power .node.kernel { animation: none; }
+  body.low-power .connector::before { animation: none; }
+  body.low-power .connector .dot { display: none; }
+  body.low-power .node { opacity: 1; transform: none; transition: none; }
+  body.low-power .ring, body.low-power .radar-sweep, body.low-power .tick { animation: none; }
+  body.low-power * { animation-play-state: paused !important; }
+
+  .stage { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 28px 24px 40px; overflow-x: clip; }
+  header { text-align: center; margin-bottom: 8px; position: relative; }
+  .kicker {
+    font-family: var(--font-mono); color: var(--flow);
+    letter-spacing: 0.35em; font-size: 13px; text-transform: uppercase;
+  }
+  .kicker .blink { animation: blink 1.1s steps(2) infinite; color: #34D399; }
+  @keyframes blink { 50% { opacity: 0.15; } }
+  /* 动态排版：标题逐字升起（hyperframes-motion 动态排版） */
+  h1 {
+    color: var(--title-yellow); font-size: clamp(34px, 6vw, 64px); font-weight: 800;
+    letter-spacing: 0.02em; line-height: 1.15; margin: 12px 0 10px;
+    text-shadow: 0 0 32px rgba(255, 184, 41, 0.35);
+  }
+  h1 .ch { display: inline-block; opacity: 0; transform: translateY(22px) rotate(2deg); animation: chIn 0.55s cubic-bezier(0.2, 0.9, 0.25, 1.2) forwards; }
+  @keyframes chIn { to { opacity: 1; transform: translateY(0) rotate(0deg); } }
+  h1 .ch.glow-pulse { animation: chIn 0.55s cubic-bezier(0.2, 0.9, 0.25, 1.2) forwards, titleGlow 2.8s ease-in-out 0.6s infinite; }
+  @keyframes titleGlow { 0%,100% { text-shadow: 0 0 22px rgba(255, 184, 41, 0.3); } 50% { text-shadow: 0 0 44px rgba(255, 184, 41, 0.6); } }
+  .sub { color: var(--muted); font-size: 17px; }
+  .sub b { color: var(--text); }
+  /* 打字机状态行（22-hud 打字机文字） */
+  .typewriter {
+    font-family: var(--font-mono); font-size: 13px; color: var(--flow);
+    min-height: 20px; margin-top: 10px; letter-spacing: 0.08em;
+  }
+  .typewriter::after { content: "▌"; animation: blink 0.9s steps(2) infinite; }
+
+  /* HUD 状态栏 + 角标（cursorflow 取景器角标） */
+  .hud {
+    display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: center;
+    font-family: var(--font-mono); font-size: 13px; color: var(--muted);
+    border: 1px solid rgba(167, 139, 250, 0.25); border-radius: 10px;
+    padding: 10px 18px; margin: 22px auto 30px; max-width: 860px;
+    background: rgba(6, 7, 10, 0.55); position: relative;
+  }
+  .hud::before, .hud::after, .panel::before, .panel::after {
+    content: ""; position: absolute; width: 14px; height: 14px; pointer-events: none;
+    border: 2px solid var(--flow);
+  }
+  .hud::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+  .hud::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+  .hud b { color: var(--flow); font-weight: 600; }
+  .hud .live { color: #34D399; }
+  .hud .live.paused-state { color: #FBBF24; }
+  .hud .tick { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--flow); margin-left: 4px; animation: tickBlink 1.6s ease-in-out infinite; }
+  @keyframes tickBlink { 0%,100% { opacity: 1; box-shadow: 0 0 8px var(--flow); } 50% { opacity: 0.25; box-shadow: none; } }
+
+  /* 雷达小部件（motion-effects #020 Sci-fi HUD） */
+  .radar-wrap { display: flex; gap: 18px; align-items: center; justify-content: center; margin: 0 auto 22px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .radar {
+    width: 74px; height: 74px; border-radius: 50%; position: relative; flex: 0 0 auto;
+    border: 1px solid rgba(34, 211, 238, 0.45);
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.12), transparent 65%),
+      repeating-radial-gradient(circle at center, transparent 0 15px, rgba(34, 211, 238, 0.18) 15px 16px);
+    overflow: hidden;
+  }
+  .radar-sweep {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(34, 211, 238, 0.55), transparent 90deg);
+    animation: radarSpin 3.6s linear infinite;
+  }
+  @keyframes radarSpin { to { transform: rotate(360deg); } }
+  .radar .blip { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #A5F3FC; box-shadow: 0 0 10px #22D3EE; animation: blipFlash 3.6s ease-in-out infinite; }
+  .radar .blip.b1 { top: 22%; left: 62%; }
+  .radar .blip.b2 { top: 64%; left: 28%; animation-delay: -1.2s; }
+  .radar .blip.b3 { top: 46%; left: 72%; animation-delay: -2.4s; }
+  @keyframes blipFlash { 0%, 55%, 100% { opacity: 0.15; } 8% { opacity: 1; } }
+  .radar-note b { color: var(--flow); font-weight: 400; }
+
+  /* 轮次进度条 */
+  .round-progress { max-width: 860px; margin: 0 auto 18px; height: 6px; border-radius: 3px; background: rgba(167, 139, 250, 0.15); overflow: hidden; }
+  .round-progress i { display: block; height: 100%; width: 0%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--node), var(--flow), var(--title-yellow));
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.6); transition: width 0.6s ease; }
+
+  /* 流水线 */
+  .pipeline { display: flex; align-items: stretch; gap: 0; width: 100%; min-width: 0; }
+  .node {
+    flex: 1 1 0; min-width: 0; position: relative; z-index: 1; /* 卡片永远画在流动光点之上：光点即使越界也盖不住卡片文字/数字 */
+    background: linear-gradient(180deg, rgba(123, 97, 255, 0.16), rgba(123, 97, 255, 0.05));
+    border: 1px solid var(--panel-border); border-radius: 14px;
+    padding: 18px 16px; text-align: left;
+    opacity: 0.25; transform: translateY(14px);
+    transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.5s ease;
+  }
+  .node::before, .node::after { /* 节点角标 */
+    content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none;
+    border: 2px solid var(--flow); opacity: 0; transition: opacity 0.4s;
+  }
+  .node::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+  .node::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+  .node.active { opacity: 1; transform: translateY(0); }
+  .node.active::before, .node.active::after { opacity: 1; }
+  .node.kernel {
+    border-color: var(--glow);
+    box-shadow: 0 0 24px rgba(167, 139, 250, 0.45), 0 0 64px rgba(123, 97, 255, 0.18);
+    animation: breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { box-shadow: 0 0 18px rgba(167, 139, 250, 0.35), 0 0 48px rgba(123, 97, 255, 0.14); }
+    50% { box-shadow: 0 0 30px rgba(167, 139, 250, 0.55), 0 0 80px rgba(123, 97, 255, 0.22); }
+  }
+  /* 激活扩散环（milestone-reveal 星点汇聚的反向：激活时向外扩） */
+  .node .ring {
+    position: absolute; inset: -6px; border-radius: 18px; pointer-events: none;
+    border: 2px solid rgba(34, 211, 238, 0.7); opacity: 0;
+  }
+  .node.active .ring { animation: ringOut 1.1s ease-out 1; }
+  @keyframes ringOut { 0% { opacity: 0.9; transform: scale(0.96); } 100% { opacity: 0; transform: scale(1.12); } }
+  .node .step { font-family: var(--font-mono); font-size: 12px; color: var(--flow); letter-spacing: 0.2em; }
+  .node h3 { font-size: 19px; margin: 8px 0 6px; }
+  .node p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .node .num { font-family: var(--font-mono); font-size: 22px; color: var(--title-yellow); margin-top: 10px; }
+  .node .num small { font-size: 12px; color: var(--muted); }
+  .node .mini-bar { height: 5px; border-radius: 3px; background: rgba(167, 139, 250, 0.18); margin-top: 10px; overflow: hidden; }
+  .node .mini-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--node), var(--flow)); border-radius: 3px; transition: width 0.9s ease; }
+  .node.active .mini-bar i { width: var(--fill, 60%); }
+  .node button {
+    margin-top: 10px; background: transparent; color: var(--flow);
+    border: 1px solid rgba(34, 211, 238, 0.5); border-radius: 8px;
+    font-size: 12px; padding: 5px 10px; cursor: pointer; font-family: var(--font-mono);
+  }
+  /* 每步不同的微动画（motion-effects 配方：同流程、不同动效） */
+  .node.active[data-anim="scan"] .scanbeam { display: block; animation: scanBeam 1.4s linear 1; }
+  .scanbeam { display: none; position: absolute; left: 0; right: 0; top: 0; height: 34%; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.18), transparent); }
+  @keyframes scanBeam { from { top: 0; } to { top: 66%; } }
+  .node.active[data-anim="flip"] h3 { animation: flipIn 0.7s ease 1; }
+  @keyframes flipIn { 0% { transform: perspective(300px) rotateX(70deg); opacity: 0; } 100% { transform: perspective(300px) rotateX(0); opacity: 1; } }
+  .node.active[data-anim="draw"] h3 { background: linear-gradient(90deg, var(--title-yellow), var(--title-yellow)) no-repeat 0 100% / 0% 2px; animation: drawLine 0.9s ease 0.15s forwards; }
+  @keyframes drawLine { to { background-size: 100% 2px; } }
+  .node.active[data-anim="grow"] .num { animation: growIn 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 1; }
+  @keyframes growIn { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .node.active[data-anim="burst"] { animation: burstFlash 0.9s ease 1; }
+  @keyframes burstFlash { 0% { box-shadow: 0 0 0 rgba(255, 184, 41, 0); } 35% { box-shadow: 0 0 44px rgba(255, 184, 41, 0.65), 0 0 90px rgba(123, 97, 255, 0.3); } 100% { box-shadow: 0 0 24px rgba(167, 139, 250, 0.45), 0 0 64px rgba(123, 97, 255, 0.18); } }
+
+  /* 连线：流动虚线 + 多光点拖尾（大小/速度/延迟各不同） */
+  .connector { flex: 0 0 46px; position: relative; z-index: 0; align-self: center; height: 2px; }
+  .connector::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+    background: repeating-linear-gradient(90deg, var(--flow) 0 6px, transparent 6px 12px);
+    background-size: 12px 2px; opacity: 0.25;
+  }
+  .connector.on::before { opacity: 1; animation: dashmove 0.8s linear infinite; filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.7)); }
+  @keyframes dashmove { to { background-position: 12px 0; } }
+  .connector .dot {
+    position: absolute; top: -4px; left: 0; width: 10px; height: 10px; border-radius: 50%;
+    background: #A5F3FC; box-shadow: 0 0 10px #22D3EE, 0 0 22px rgba(34, 211, 238, 0.5); display: none;
+  }
+  /* 流动光点不得越出连线：每颗光点按自身直径收尾（旧写法统一按 10px
+     收尾，13px 的黄色大光点每圈都会越出连线右端 3px，伸进下一张卡片，
+     曾一帧正好盖住“186”的“1”看成“-19”）。--dot-w 让每颗光点
+     整个直径都留在连线内，竖排模式共用同一变量。 */
+  .connector .dot.d1 { width: 10px; height: 10px; top: -4px; --dot-w: 10px; }
+  .connector .dot.d2 { width: 6px; height: 6px; top: -2px; background: #C4B5FD; box-shadow: 0 0 8px #A78BFA; --dot-w: 6px; }
+  .connector .dot.d3 { width: 13px; height: 13px; top: -5.5px; background: #FDE68A; box-shadow: 0 0 14px #FFB829; --dot-w: 13px; }
+  .connector.on .dot { display: block; animation: travel 1.2s linear infinite; }
+  .connector.on .dot.d2 { animation-duration: 1.9s; animation-delay: -0.6s; }
+  .connector.on .dot.d3 { animation-duration: 2.6s; animation-delay: -1.3s; }
+  @keyframes travel { from { left: 0; } to { left: calc(100% - var(--dot-w, 10px)); } }
+  .connector::after {
+    content: "›"; position: absolute; right: -2px; top: -11px; color: var(--flow); font-size: 18px;
+  }
+
+  /* 详情 + 日志 */
+  .panels { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-top: 30px; }
+  .panel {
+    border: 1px solid rgba(167, 139, 250, 0.25); border-radius: 14px;
+    background: rgba(6, 7, 10, 0.55); padding: 18px 20px; min-height: 150px; position: relative;
+  }
+  .panel::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+  .panel::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+  .panel.flip { animation: panelFlip 0.45s ease 1; }
+  @keyframes panelFlip { 0% { transform: perspective(600px) rotateY(8deg); opacity: 0.6; } 100% { transform: perspective(600px) rotateY(0); opacity: 1; } }
+  .panel h2 { font-size: 15px; color: var(--flow); font-family: var(--font-mono); letter-spacing: 0.15em; margin-bottom: 10px; }
+  .panel .big { font-size: 20px; margin-bottom: 6px; }
+  .panel p { color: var(--muted); font-size: 14px; line-height: 1.65; }
+  .log { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); line-height: 1.9; }
+  /* 修复 v2 缺陷 2（根因）：旧的 logIn 从 opacity:0 起步。若日志条目在
+     创建/重排时动画被暂停（body.paused 的 animation-play-state:paused、
+     或强度切换触发的重排），条目会永远冻在 opacity:0，看着就是“DOM 有
+     记录、框里一片空白”，新条目也一样。改成只做位移、不碰透明度，
+     再加 opacity:1 兜底，动画无论停在哪一帧条目都可见。 */
+  .log div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 1; animation: logIn 0.35s ease 1; }
+  @keyframes logIn { from { transform: translateX(-8px); } to { transform: translateX(0); } }
+  /* 暂停/静态模式下也不许把日志冻住：直接关掉它的入场动画。 */
+  body.paused .log div, body.low-power .log div { animation: none; opacity: 1; transform: none; }
+  .log b { color: var(--flow); font-weight: 400; }
+
+  /* 控制条 */
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 28px; }
+  .controls button, .controls .toggle {
+    background: rgba(123, 97, 255, 0.12); color: var(--text);
+    border: 1px solid var(--panel-border); border-radius: 10px;
+    padding: 9px 16px; font-size: 14px; cursor: pointer; font-family: var(--font-display);
+  }
+  .controls button.active { background: var(--node); border-color: var(--glow); }
+  .controls label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); cursor: pointer; }
+  .controls .group-label { align-self: center; font-size: 13px; color: var(--muted); font-family: var(--font-mono); }
+  .hint { text-align: center; color: var(--muted); font-size: 13px; margin-top: 16px; }
+
+  /* 动画强度档（新增，独立于预设与合规开关） */
+  body[data-intensity="standard"] .hex-accent,
+  body[data-intensity="standard"] .radar { display: none; }
+  body[data-intensity="standard"] .bg-persp { animation-duration: 6s; opacity: 0.6; }
+  body[data-intensity="standard"] .connector .dot.d3 { display: none; }
+  body[data-intensity="calm"] .hex-accent, body[data-intensity="calm"] .radar-wrap,
+  body[data-intensity="calm"] .bg-persp, body[data-intensity="calm"] .bg-dots { display: none; }
+  body[data-intensity="calm"] .scanline { display: none; }
+  body[data-intensity="calm"] .connector .dot { display: none; }
+  body[data-intensity="calm"] .node.kernel { animation: none; }
+  body[data-intensity="calm"] .bg-grid { animation: none; }
+
+  /* 合规克制版：去掉流动、粒子、呼吸辉光、扫描线 */
+  body.compliant .connector::before { animation: none; opacity: 0.6; filter: none; }
+  body.compliant .connector .dot, body.compliant .scanline, body.compliant #net,
+  body.compliant .radar-wrap, body.compliant .hex-accent, body.compliant .bg-persp { display: none; }
+  body.compliant .node.kernel { animation: none; box-shadow: 0 0 12px rgba(167, 139, 250, 0.25); }
+  body.compliant .bg-grid, body.compliant .bg-dots { animation: none; }
+  body.compliant h1 { text-shadow: none; }
+
+  /* 修复 v2 缺陷 1（续）：978px 左右窗口 5 张卡 + 4 条 46px 连线放不下，
+     STEP05 会被截断并出现横向滚动条。1100px 以下切紧凑布局：连线
+     46px→30px、卡片内边距与字号收小、舞台左右边距 24px→14px，
+     5 卡仍横排不换行；1920px 桌面布局不受影响（该规则不生效），
+     760px 以下仍按原规则竖排。 */
+  @media (max-width: 1100px) {
+    .stage { padding: 24px 14px 36px; }
+    .connector { flex-basis: 30px; }
+    .connector::after { right: -1px; }
+    .node { padding: 14px 11px; }
+    .node h3 { font-size: 17px; }
+    .node p { font-size: 12.5px; line-height: 1.5; }
+    .node .num { font-size: 19px; }
+    .node button { padding: 5px 8px; }
+    .hud { gap: 8px 18px; }
+    .bg-persp { left: -10%; right: -10%; }
+  }
+
+  @media (max-width: 760px) {
+    .pipeline { flex-direction: column; }
+    .connector { flex: 0 0 34px; width: 2px; height: 34px; align-self: center; }
+    .connector::before {
+      width: 2px; height: 100%; left: 0; top: 0;
+      background: repeating-linear-gradient(180deg, var(--flow) 0 6px, transparent 6px 12px);
+      background-size: 2px 12px;
+    }
+    .connector.on::before { animation: dashmoveV 0.8s linear infinite; }
+    @keyframes dashmoveV { to { background-position: 0 12px; } }
+    .connector .dot { top: 0; left: -4px; }
+    .connector.on .dot { animation: travelV 1.2s linear infinite; }
+    .connector.on .dot.d2 { animation-duration: 1.9s; animation-delay: -0.6s; }
+    .connector.on .dot.d3 { animation-duration: 2.6s; animation-delay: -1.3s; }
+    @keyframes travelV { from { top: 0; } to { top: calc(100% - var(--dot-w, 10px)); } }
+    .connector::after { content: "⌄"; right: -7px; top: auto; bottom: -14px; }
+    .panels { grid-template-columns: 1fr; }
+    .bg-persp { display: none; }
+  }
+</style>
+</head>
+<body data-intensity="full">
+<div class="bg-grid"></div>
+<div class="bg-dots"></div>
+<div class="bg-persp"></div>
+<canvas id="net"></canvas>
+<div class="scanline"></div>
+<div class="hex-accent a"></div>
+<div class="hex-accent b"></div>
+
+<main class="stage">
+  <header>
+    <div class="kicker">Grok Bot · AI Agent <span class="blink">● LIVE</span></div>
+    <h1 id="title">外贸全自动获客流水线</h1>
+    <p class="sub">睡一觉，<b>200 个客户</b>开发信已发完 · 一个人就是一个外贸部</p>
+    <div class="typewriter" id="typewriter"></div>
+  </header>
+
+  <div class="hud">
+    <span>状态 <b class="live" id="hud-status">● RUNNING</b><span class="tick"></span></span>
+    <span>已扫描 <b id="hud-scan">0</b> / 420</span>
+    <span>通过筛选 <b id="hud-pass">0</b> / 186</span>
+    <span>已送达 <b id="hud-sent">0</b> / 183</span>
+    <span>送达率 <b>98.4%</b></span>
+  </div>
+
+  <div class="radar-wrap">
+    <div class="radar"><div class="radar-sweep"></div><span class="blip b1"></span><span class="blip b2"></span><span class="blip b3"></span></div>
+    <div class="radar-note">雷达扫描中 · 目标锁定 <b>3</b> 个 · 网格 <b id="grid-size">40px</b> · 粒子网络运行中</div>
+  </div>
+
+  <div class="round-progress"><i id="round-bar"></i></div>
+
+  <section class="pipeline" id="pipeline" aria-label="五步流水线"></section>
+
+  <div class="panels">
+    <div class="panel" id="detail-panel">
+      <h2 id="detail-title">STEP 01 · 数据采集</h2>
+      <div class="big" id="detail-big">正在爬取地图商家数据…</div>
+      <p id="detail-text">点击任意节点查看该步详情；演示会自动一轮轮跑。</p>
+    </div>
+    <div class="panel">
+      <h2>运行日志 · LIVE LOG</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="btn-play">⏸ 暂停</button>
+    <button id="btn-restart">↻ 重新跑一轮</button>
+    <button class="speed" data-speed="0.5">0.5×</button>
+    <button class="speed active" data-speed="1">1×</button>
+    <button class="speed" data-speed="2">2×</button>
+    <span class="group-label">动画强度</span>
+    <button class="intensity active" data-intensity="full">炫技</button>
+    <button class="intensity" data-intensity="standard">标准</button>
+    <button class="intensity" data-intensity="calm">静态</button>
+    <span class="group-label">预设</span>
+    <button class="preset active" data-preset="tech">tech-style</button>
+    <button class="preset" data-preset="darktech">dark-tech</button>
+    <button class="preset" data-preset="neon">Neon Cyber</button>
+    <button class="preset" data-preset="terminal">Terminal Green</button>
+    <label><input type="checkbox" id="compliant"> 合规克制版（去动效，供评审）</label>
+  </div>
+  <p class="hint">单文件 HTML，不依赖外部字体与 CDN · 浏览器打开即可播放，全屏录屏就是视频 · 按 <b>B</b> 切换静态模式</p>
+</main>
+
+<script>
+  // 步骤数据：与视频文案一致的五步；数字全页共用同一组，避免对不上
+  // 每步一种微动画（motion-effects 配方）：scan 扫描 / flip 翻转 / draw 描绘 / grow 生长 / burst 爆发
+  const STEPS = [
+    { id: 1, name: "数据采集", en: "COLLECT", anim: "scan", fill: "100%", desc: "爬取地图商家数据，按行业与地区拉取原始线索。", num: "420", unit: "家商家", detail: "本轮共扫描 420 家地图商家，覆盖目标行业与地区，原始线索全部落库，等待筛选。", log: "地图数据抓取完成：420 家" },
+    { id: 2, name: "智能筛选", en: "FILTER", anim: "flip", fill: "44%", desc: "按规模、品类与联系方式完整度，筛出精准客户。", num: "186", unit: "通过 · 44.3%", detail: "420 家中 186 家通过筛选（44.3%），其余因规模不符或无公开联系方式被剔除。", log: "筛选完成：186 / 420 通过" },
+    { id: 3, name: "AI 生成", en: "GENERATE", anim: "draw", fill: "100%", desc: "按客户行业与产品，自动写英文开发信。", num: "186", unit: "封开发信", detail: "为 186 家通过客户各写一封英文开发信，语气与产品卖点按行业模板生成，待人工审批。", log: "开发信生成完成：186 封" },
+    { id: 4, name: "自动封装", en: "PACKAGE", anim: "grow", fill: "100%", desc: "开发信自动转 PDF，附产品资料打包。", num: "186", unit: "份 PDF", detail: "186 封开发信全部转成 PDF，并附上产品资料，打包待发。", log: "PDF 封装完成：186 份" },
+    { id: 5, name: "批量分发", en: "SEND", anim: "burst", fill: "98%", desc: "经人工点审批后，自动发 Gmail。", num: "183", unit: "已送达 · 98.4%", detail: "审批通过后发出 186 封，183 封送达（98.4%），3 封退信已记录，人工只需点审批。", log: "Gmail 发送完成：183 / 186 送达", kernel: true }
+  ];
+  const TOTAL = { scan: 420, pass: 186, sent: 183 };
+
+  // 标题逐字升起（hyperframes-motion 动态排版：首 3 秒钩子）
+  const titleEl = document.getElementById("title");
+  const titleText = titleEl.textContent;
+  titleEl.innerHTML = titleText.split("").map((ch, i) =>
+    '<span class="ch' + (i < 2 ? " glow-pulse" : "") + '" style="animation-delay:' + (i * 0.06) + 's">' + ch + "</span>").join("");
+
+  const pipelineEl = document.getElementById("pipeline");
+  STEPS.forEach((s, i) => {
+    if (i > 0) {
+      const c = document.createElement("div");
+      c.className = "connector"; c.id = "conn-" + i;
+      c.innerHTML = '<span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span>';
+      pipelineEl.appendChild(c);
+    }
+    const n = document.createElement("article");
+    n.className = "node" + (s.kernel ? " kernel" : "");
+    n.id = "node-" + s.id;
+    n.dataset.anim = s.anim;
+    n.style.setProperty("--fill", s.fill);
+    n.innerHTML = '<span class="ring"></span><span class="scanbeam"></span>' +
+      '<div class="step">STEP 0' + s.id + ' · ' + s.en + '</div>' +
+      "<h3>" + s.name + "</h3><p>" + s.desc + "</p>" +
+      '<div class="num"><span class="count" data-target="' + parseInt(s.num, 10) + '">0</span> <small>' + s.unit + "</small></div>" +
+      '<div class="mini-bar"><i></i></div>' +
+      '<button type="button">查看详情 ›</button>';
+    n.querySelector("button").addEventListener("click", () => showDetail(s));
+    pipelineEl.appendChild(n);
+  });
+
+  const detailPanel = document.getElementById("detail-panel"),
+        detailTitle = document.getElementById("detail-title"),
+        detailBig = document.getElementById("detail-big"),
+        detailText = document.getElementById("detail-text"),
+        logEl = document.getElementById("log"),
+        roundBar = document.getElementById("round-bar"),
+        typeEl = document.getElementById("typewriter");
+  function showDetail(s) {
+    detailTitle.textContent = "STEP 0" + s.id + " · " + s.name;
+    detailBig.textContent = s.name + "：" + s.num + " " + s.unit;
+    detailText.textContent = s.detail;
+    detailPanel.classList.remove("flip"); void detailPanel.offsetWidth; detailPanel.classList.add("flip");
+  }
+  function addLog(text) {
+    const d = document.createElement("div");
+    d.innerHTML = "<b>[" + new Date().toLocaleTimeString("zh-CN", { hour12: false }) + "]</b> " + text;
+    logEl.prepend(d);
+    while (logEl.children.length > 6) logEl.removeChild(logEl.lastChild);
+    // 缺陷 2 的 JS 兜底：动画结束后把入场动画清掉、透明度钉死在 1，
+    // 这样即使中途暂停/切强度把动画冻住，条目也不会留在不可见状态。
+    d.addEventListener("animationend", () => { d.style.animation = "none"; d.style.opacity = "1"; d.style.transform = "none"; }, { once: true });
+  }
+  // 强度切换 / 重新跑一轮时，把已有日志条目的动画状态全部复位：
+  // 关动画、透明度置 1、位移清零——再有重排也不会变空白。
+  function resetLogVisibility() {
+    Array.from(logEl.children).forEach(el => {
+      el.style.animation = "none"; el.style.opacity = "1"; el.style.transform = "none";
+    });
+    void logEl.offsetWidth; // 强制重排，让复位立即生效
+  }
+  // 打字机状态行（22-hud）：逐字打出当前步骤
+  let typeTimer = null;
+  function typeStatus(text) {
+    clearInterval(typeTimer); typeEl.textContent = "";
+    let i = 0;
+    typeTimer = setInterval(() => {
+      typeEl.textContent = text.slice(0, ++i);
+      if (i >= text.length) clearInterval(typeTimer);
+    }, 45);
+  }
+  // 数字滚动（motion-graphics-skills animated-chart：数字滚上去再落定）
+  function rollCount(el, target) {
+    const start = performance.now(), dur = 900;
+    function frame(now) {
+      const p = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * e);
+      if (p < 1 && !document.body.classList.contains("low-power")) requestAnimationFrame(frame);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // 演示时序：单时钟驱动（motion2code：一条时间线是唯一时钟）
+  let speed = 1, playing = true, timer = null, stepIdx = 0;
+  const hudScan = document.getElementById("hud-scan"),
+        hudPass = document.getElementById("hud-pass"),
+        hudSent = document.getElementById("hud-sent");
+  function setHud(scan, pass, sent) {
+    hudScan.textContent = scan; hudPass.textContent = pass; hudSent.textContent = sent;
+  }
+  function runStep() {
+    if (!playing) return;
+    if (stepIdx >= STEPS.length) { addLog("本轮完成，3 秒后重新开始…"); typeStatus("本轮完成 · 3 秒后重新开始"); timer = setTimeout(reset, 3000 / speed); return; }
+    const s = STEPS[stepIdx];
+    const node = document.getElementById("node-" + s.id);
+    node.classList.add("active");
+    if (stepIdx > 0) document.getElementById("conn-" + stepIdx).classList.add("on");
+    rollCount(node.querySelector(".count"), parseInt(s.num, 10));
+    showDetail(s); addLog(s.log); typeStatus("正在执行 STEP 0" + s.id + " · " + s.name + " …");
+    setHud(s.id >= 1 ? TOTAL.scan : 0, s.id >= 2 ? TOTAL.pass : 0, s.id >= 5 ? TOTAL.sent : 0);
+    roundBar.style.width = ((stepIdx + 1) / STEPS.length * 100) + "%";
+    stepIdx++;
+    timer = setTimeout(runStep, 1600 / speed);
+  }
+  function reset() {
+    clearTimeout(timer); stepIdx = 0; setHud(0, 0, 0); roundBar.style.width = "0%";
+    resetLogVisibility(); // 重新跑一轮也复位日志可见性（缺陷 2）
+    document.querySelectorAll(".node").forEach(n => {
+      n.classList.remove("active");
+      n.querySelector(".count").textContent = "0";
+    });
+    document.querySelectorAll(".connector").forEach(c => c.classList.remove("on"));
+    if (playing) timer = setTimeout(runStep, 500 / speed);
+  }
+  const hudStatus = document.getElementById("hud-status");
+  function setPlaying(next) {
+    playing = next;
+    document.body.classList.toggle("paused", !playing);
+    // 暂停时顶部状态改成 PAUSED（琥珀色），恢复时改回 RUNNING（绿色）
+    hudStatus.textContent = playing ? "● RUNNING" : "● PAUSED";
+    hudStatus.classList.toggle("paused-state", !playing);
+  }
+  document.getElementById("btn-play").addEventListener("click", (e) => {
+    setPlaying(!playing);
+    e.target.textContent = playing ? "⏸ 暂停" : "▶ 继续演示";
+    if (playing) timer = setTimeout(runStep, 400 / speed); else clearTimeout(timer);
+  });
+  document.getElementById("btn-restart").addEventListener("click", reset);
+  document.querySelectorAll(".speed").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".speed").forEach(x => x.classList.remove("active"));
+    b.classList.add("active"); speed = parseFloat(b.dataset.speed);
+  }));
+  document.getElementById("compliant").addEventListener("change", (e) => {
+    document.body.classList.toggle("compliant", e.target.checked);
+    resetLogVisibility();
+    addLog(e.target.checked ? "已切换合规克制版：动效已关闭" : "已切回炫技版");
+  });
+  // 动画强度档（新增）：炫技 / 标准 / 静态
+  document.querySelectorAll(".intensity").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".intensity").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    document.body.dataset.intensity = b.dataset.intensity;
+    resetLogVisibility(); // 先复位已有日志，再写新条目（缺陷 2）
+    addLog("动画强度已切换：" + b.textContent);
+  }));
+  // 雷达旁文案的网格尺寸必须跟当前预设的真实网格一致：
+  // tech-style / Neon / Terminal 都是墙面网格 40px，dark-tech 是 80px 点阵
+  // （.bg-grid 与 .bg-dots 在 dark-tech 下都是 80px）。旧写法把 40px
+  // 写死在 HTML 里，切到 dark-tech 就成了错的数字。
+  const GRID_SIZE = { tech: "40px", darktech: "80px", neon: "40px", terminal: "40px" };
+  const gridSizeEl = document.getElementById("grid-size");
+  function updateGridLabel(preset) {
+    if (gridSizeEl) gridSizeEl.textContent = GRID_SIZE[preset] || "40px";
+  }
+  // 预设切换（Frontend Slides 三预览机制：只换 CSS 变量）
+  document.querySelectorAll(".preset").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".preset").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    document.body.dataset.preset = b.dataset.preset;
+    updateGridLabel(b.dataset.preset);
+    resetLogVisibility();
+    addLog("已切换预设：" + b.textContent);
+  }));
+  // B 键静态模式（归藏做法）：停止全部动画，直接显示终态
+  addEventListener("keydown", (e) => {
+    if (e.key === "b" || e.key === "B") {
+      const on = document.body.classList.toggle("low-power");
+      resetLogVisibility();
+      addLog(on ? "静态模式：动画已停止" : "已恢复动画");
+    }
+  });
+
+  // 背景网络：canvas 发光节点、连线、彗星脉冲（motion-effects 粒子 + PHANTOMTONYT 数据包）
+  const canvas = document.getElementById("net"), ctx = canvas.getContext("2d");
+  let pts = [], comets = [];
+  function resize() {
+    canvas.width = innerWidth; canvas.height = innerHeight;
+    pts = Array.from({ length: 64 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.35, vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 2.2 + 0.7, tw: Math.random() * 6.28
+    }));
+    comets = Array.from({ length: 5 }, () => ({ a: Math.floor(Math.random() * pts.length), b: Math.floor(Math.random() * pts.length), t: Math.random() }));
+  }
+  addEventListener("resize", resize); resize();
+  (function draw() {
+    requestAnimationFrame(draw);
+    if (!playing || document.body.classList.contains("compliant") || document.body.classList.contains("low-power")) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const t = performance.now() / 1000;
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      const tw = 0.45 + 0.55 * Math.abs(Math.sin(t * 1.4 + p.tw)); // 闪烁（motion-effects 无闪烁规则：用平滑正弦，不用随机跳变）
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7);
+      ctx.fillStyle = "rgba(167,139,250," + (0.8 * tw).toFixed(2) + ")"; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3, 0, 7);
+      ctx.fillStyle = "rgba(123,97,255," + (0.12 * tw).toFixed(2) + ")"; ctx.fill();
+    });
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y, d = Math.hypot(dx, dy);
+      if (d < 150) {
+        ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y);
+        ctx.strokeStyle = "rgba(34,211,238," + (0.14 * (1 - d / 150)).toFixed(2) + ")"; ctx.lineWidth = 1; ctx.stroke();
+      }
+    }
+    // 彗星脉冲：沿随机节点对旅行的大光点带拖尾
+    comets.forEach(c => {
+      c.t += 0.006; if (c.t > 1) { c.t = 0; c.a = Math.floor(Math.random() * pts.length); c.b = Math.floor(Math.random() * pts.length); }
+      const a = pts[c.a], b = pts[c.b]; if (!a || !b) return;
+      const x = a.x + (b.x - a.x) * c.t, y = a.y + (b.y - a.y) * c.t;
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, 14);
+      grad.addColorStop(0, "rgba(165,243,252,0.95)"); grad.addColorStop(0.4, "rgba(34,211,238,0.4)"); grad.addColorStop(1, "rgba(34,211,238,0)");
+      ctx.beginPath(); ctx.arc(x, y, 14, 0, 7); ctx.fillStyle = grad; ctx.fill();
+    });
+  })();
+
+  showDetail(STEPS[0]);
+  typeStatus("系统就绪 · 正在启动流水线 …");
+  timer = setTimeout(runStep, 600);
+</script>
+</body>
+</html>

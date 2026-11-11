@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>国内大学各项比赛 PPT 和 HTML skills — 说明站</title>
+<style>
+  :root{--bg:#06070a;--bg2:#0A0A14;--panel:#0d1020;--line:#1e2440;--text:#e8eaf2;
+  --muted:#9aa3b8;--violet:#7B61FF;--violet2:#8052FF;--glow:#A78BFA;--cyan:#22D3EE;
+  --gold:#FFB829;--gold2:#C9A84C;--navy:#0A1628;--blue:#002B4B;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;line-height:1.7;padding:0 20px 60px}
+  header{max-width:960px;margin:0 auto;padding:56px 0 28px;border-bottom:1px solid var(--line)}
+  h1{font-size:32px;line-height:1.3}
+  h1 .gold{color:var(--gold)}
+  header p{color:var(--muted);margin-top:10px}
+  main{max-width:960px;margin:0 auto}
+  section{margin-top:36px}
+  h2{font-size:22px;margin-bottom:12px;border-left:4px solid var(--violet);padding-left:10px}
+  h2.ppt{border-left-color:var(--gold2)}
+  .tracks{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.tracks{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card h3{font-size:18px;margin-bottom:8px}
+  .card.html h3{color:var(--glow)}
+  .card.ppt h3{color:var(--gold)}
+  .card ul{padding-left:20px;color:var(--muted)}
+  .card li{margin:4px 0}
+  .warn{margin-top:16px;background:#141021;border:1px solid #3a2b12;border-radius:8px;padding:12px 16px;color:var(--gold);font-size:14px}
+  .swatches{display:flex;flex-wrap:wrap;gap:10px}
+  .sw{width:120px;border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;background:var(--panel)}
+  .sw .chip{height:52px}
+  .sw .lbl{padding:6px 8px;font-size:12px;color:var(--muted)}
+  .sw .lbl b{display:block;color:var(--text);font-family:monospace;font-size:13px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:12px 16px}
+  summary{cursor:pointer;font-weight:bold}
+  details p{color:var(--muted);margin-top:6px;font-size:14px}
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;overflow-x:auto;font-size:13px;line-height:1.6}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace}
+  ol{padding-left:22px;color:var(--muted)}
+  ol li{margin:6px 0}
+  footer{max-width:960px;margin:40px auto 0;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:13px}
+  a{color:var(--cyan)}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--violet);color:#fff;padding:8px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>国内大学各项比赛 <span class="gold">PPT 和 HTML skills</span></h1>
+  <p>做两类东西的 skill：科技风 HTML 动画演示，和国内比赛套路式 PPT。</p>
+</header>
+<main>
+  <section>
+    <h2>两条轨道</h2>
+    <div class="tracks">
+      <div class="card html">
+        <h3>HTML ＝ 科技风</h3>
+        <ul>
+          <li>单文件 HTML 动画演示，可录屏成视频</li>
+          <li>深色底、蓝紫发光节点、青蓝连线</li>
+          <li>粒子流动、Swarm 多光标</li>
+          <li>起点：skill/assets/template.html</li>
+        </ul>
+      </div>
+      <div class="card ppt">
+        <h3>PPT ＝ 比赛风</h3>
+        <ul>
+          <li>原生可编辑 PPTX（16:9）</li>
+          <li>国内比赛套路式视觉：深蓝底、金色书法大标题</li>
+          <li>白卡片、2×2 数字卡、章节标签、弧线光带</li>
+          <li>先读：skill/references/competition-style-distilled.md</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn">两条轨道不许混。HTML 里不出现金色书法大标题、白卡片；PPT 里不出现流动粒子、雷达、Swarm 光标。</div>
+  </section>
+
+  <section>
+    <h2>HTML 轨道 · 样式色板（点一下复制色值）</h2>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <section>
+    <h2 class="ppt">PPT 轨道 · 比赛套路清单</h2>
+    <details open>
+      <summary>封面三件套</summary>
+      <p>左上赛事全称 + 右上 logo 占位；中央项目名书法体超大字；名下压一条口号；底部一行药丸标签（赛道 / 学校 / 组别 / 负责人）。先定“底色 + 金属点缀色 + 主视觉照片”三件，再套同一套章节与页型。</p>
+    </details>
+    <details>
+      <summary>深蓝底色值抄准</summary>
+      <p>官方模板实测主底色 #002B4B（左上），向右上渐亮至 #005389–#005B94，中部 #004370；封面、内容页、封底共用同一套底。</p>
+    </details>
+    <details>
+      <summary>章节标题淡香槟金</summary>
+      <p>短金横线 + “一、项目背景”（“一、”小字 + 节名大字），金色取样 #FFE7B0 / #FFE8B3 / #FFE1A0；封底巨字口号用更深更饱和的金 #F8D44F / #F3C53C。</p>
+    </details>
+    <details>
+      <summary>内容页固定骨架</summary>
+      <p>左上 NAVY 圆角 section 标签（2.6×0.6 英寸，NAVY 底白字 22pt Bold）＋“——副标题”16pt 灰＋右下角页码“X/总数”10pt；三栏卡片 / 左右分栏 / 时间线三种版式按内容选用。</p>
+    </details>
+    <details>
+      <summary>数据与对比只用清单里的版式</summary>
+      <p>黑底 + 青蓝图表数字标图上，或 2×2 白色数字卡、中央大数字 + 上升箭头、双柱对比条形图；对比页三选一（对比表 / 左右冷暖栏金色只给己方 / 相交大圆）；数字卡每页至少 3 个真实指标，不够就合页，不编数。</p>
+    </details>
+    <details>
+      <summary>8 节顺序与页数上限按赛道版本抄死</summary>
+      <p>省赛 / 青创北京版：背景 ≤2 / 整体 ≤2 / 核心技术 ≤4 / 商业模式 ≤3 / 项目应用 ≤4 / 社会价值 ≤1 / 团队 ≤1 / 未来展望 ≤1（合计 18 页）；合工大专项赛版把项目应用与商业模式对调，同一模板两个顺序，不能混用。</p>
+    </details>
+    <details>
+      <summary>赛道换皮</summary>
+      <p>科技蓝 #165DFF、乡村振兴草绿 #00B42A、文创暖橙 #FF7D00、公益暖红 #F53F3F；农业 / 乡村类用绿主色 + 实拍大图，别硬套深蓝。</p>
+    </details>
+  </section>
+
+  <section>
+    <h2>目录结构</h2>
+<pre><code>skill/   # skill 本体
+  SKILL.md              # 主说明：视觉母版、双路线、双模式、硬规则
+  references/           # 规则与调研：比赛套路提炼、真实案例拆解、风格 token、融合来源
+  assets/               # HTML 模板、PPTX 模板
+  scripts/              # check.py 自检、make_pptx.py 生成 PPTX
+docs/    # 说明站（本页）</code></pre>
+  </section>
+
+  <section>
+    <h2>用法</h2>
+    <ol>
+      <li>做 HTML 动画演示：用 <code>skill/assets/template.html</code> 作起点，按 <code>skill/SKILL.md</code> 的视觉母版改；跑 <code>skill/scripts/check.py</code> 自检。</li>
+      <li>做比赛 PPT：先读 <code>skill/references/competition-style-distilled.md</code> 的套路清单，再按 <code>skill/SKILL.md</code> 的结构做；生成见 <code>skill/scripts/make_pptx.py</code>。</li>
+      <li>比赛结构硬约束（页数、章节顺序、标题即结论）优先于视觉套路。</li>
+    </ol>
+  </section>
+</main>
+<footer>
+  许可：MIT（仅覆盖本仓库原创内容；借鉴的第三方来源见 SOURCES.md）。仓库：<a href="https://github.com/abwoo/china-university-competition-ppt-html-skills">abwoo/china-university-competition-ppt-html-skills</a>
+</footer>
+<div id="toast">已复制</div>
+<script>
+const TOKENS=[
+  ["底色","#06070a"],["底色 2","#0A0A14"],["蓝紫节点","#7B61FF"],["蓝紫节点 2","#8052FF"],
+  ["辉光","#A78BFA"],["连线青蓝","#22D3EE"],["标题黄","#FFB829"],["深蓝底","#002B4B"],
+  ["金","#C9A84C"],["香槟金","#FFE7B0"],["科技蓝","#165DFF"],["草绿","#00B42A"]
+];
+const box=document.getElementById("swatches");
+TOKENS.forEach(([name,hex])=>{
+  const d=document.createElement("div");d.className="sw";
+  d.innerHTML='<div class="chip" style="background:'+hex+'"></div><div class="lbl"><b>'+hex+'</b>'+name+'</div>';
+  d.onclick=()=>{navigator.clipboard.writeText(hex);const t=document.getElementById("toast");t.textContent="已复制 "+hex;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1200);};
+  box.appendChild(d);
+});
+</script>
+</body>
+</html>
